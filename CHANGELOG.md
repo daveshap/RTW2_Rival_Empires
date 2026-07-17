@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.9.1 — 2026-07-17
+
+- Fixed the startup-crash defect in the custom construction-time database
+  layer: schema-version-0 tables now omit the on-disk version marker required
+  only by positive table versions.
+- Added an independent PFH4 and full-row DB decoder that rejects the exact
+  malformed version-zero header emitted by 0.9.0.
+- Replaced the shared companion-aware bootstrap with a Rival-only standalone
+  loader and removed runtime knowledge of other mods.
+- Replaced world-wide first-tick and human-turn bundle mutation with bounded
+  per-AI-faction refreshes at that faction's turn start.
+- Prevented native bundle calls against dead, regionless, rebel, separatist,
+  civil-war, and other explicitly excluded faction placeholders.
+- Made established-rival support select the previous configured tier even when
+  a custom build uses non-contiguous Imperium tiers.
+- Made the release command rebuild packs and generated sources, refresh
+  checksums, run Python and Lua tests, build the deterministic ZIP, and verify
+  the finished archive.
+- Added release/source/checksum/version synchronization tests and made clean
+  main-menu activation an explicit manual release gate.
+- Withdrawn 0.9.0 as a boot-broken release; its archive remains unchanged for
+  version history and diagnosis.
+
 ## 0.9.0 — 2026-07-17
 
 - Added AI-only development response tiers keyed to local-human Imperium.

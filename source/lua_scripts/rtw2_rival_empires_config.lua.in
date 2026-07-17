@@ -6,7 +6,7 @@ return {
     enabled = true,
     write_log = true,
 
-    -- Version 0.9 is intentionally scoped to the single-player Grand
+    -- Version 0.9.1 is intentionally scoped to the single-player Grand
     -- Campaign. Multiple local humans need a different target-selection rule.
     grand_campaign_only = true,
     eligibility_mode = "independent_rivals",
@@ -16,10 +16,10 @@ return {
     minimum_established_rival_regions = @MINIMUM_ESTABLISHED_REGIONS@,
     effect_bundle_duration = 1,
 
-    -- A faction at war with the local human, a Grand Coalition member, or a
-    -- regional champion receives the current full tier. Other established
-    -- independent rivals receive one tier lower. Human friends/dependents and
-    -- campaign insurgents are always excluded.
+    -- A faction at war with the local human or a regional champion receives
+    -- the current full tier. Other established independent rivals receive one
+    -- tier lower. Human friends/dependents and campaign insurgents are always
+    -- excluded.
     tiers = {
 @TIER_ROWS@
     },

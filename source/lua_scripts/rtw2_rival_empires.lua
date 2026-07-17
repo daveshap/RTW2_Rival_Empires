@@ -229,27 +229,6 @@ local function collect_military(faction)
     return total
 end
 
-local function coalition_member_keys()
-    local result = {}
-    local module = package.loaded["lua_scripts.rtw2_grand_coalitions"]
-    if type(module) ~= "table" or
-        type(module.get_active_coalition) ~= "function" then
-        return result
-    end
-    local ok, active = pcall(module.get_active_coalition)
-    if not ok or type(active) ~= "table" or
-        type(active.members) ~= "table" then
-        return result
-    end
-    for _, member in pairs(active.members) do
-        local key = type(member) == "table" and member.key or member
-        if type(key) == "string" and key ~= "" then
-            result[key] = true
-        end
-    end
-    return result
-end
-
 local function local_human(model, faction_interfaces)
     local fallback = nil
     for key, faction in pairs(faction_interfaces) do
@@ -273,8 +252,6 @@ local function collect_world(game)
     local snapshots = {}
     local interfaces = {}
     local treaty_maps = {}
-    local coalition_members = coalition_member_keys()
-
     for index = 0, list_count(faction_list) - 1 do
         local faction = faction_list:item_at(index)
         local key = faction_key(faction)
@@ -293,8 +270,7 @@ local function collect_world(game)
                 military = collect_military(faction),
                 at_war_human = false,
                 allied_human = false,
-                dependent_human = false,
-                coalition_member = coalition_members[key] == true
+                dependent_human = false
             }
             interfaces[key] = faction
             treaty_maps[key] = treaty_map_for(faction)
@@ -363,16 +339,35 @@ local function remove_known_bundles(game, key)
     end
 end
 
+local function runtime_target(faction)
+    local key = faction_key(faction)
+    if not key or excluded_key(key) then
+        return false
+    end
+    if safe_value(function()
+        return faction:is_human()
+    end, false) then
+        return false
+    end
+    return list_count(safe_value(function()
+        return faction:region_list()
+    end, nil)) > 0
+end
+
 local function apply_assignment(game, faction, tier)
     local key = faction_key(faction)
-    if not key then
-        return
+    if not key or not runtime_target(faction) then
+        return false
     end
-    remove_known_bundles(game, key)
     local bundle = rival_empires.core.bundle_key_for_tier(
         tier,
         rival_empires.config
     )
+    for _, definition in pairs(rival_empires.config.tiers) do
+        if definition.bundle_key and definition.bundle_key ~= bundle then
+            game:remove_effect_bundle(definition.bundle_key, key)
+        end
+    end
     if bundle then
         game:apply_effect_bundle(
             bundle,
@@ -380,6 +375,7 @@ local function apply_assignment(game, faction, tier)
             rival_empires.config.effect_bundle_duration
         )
     end
+    return true
 end
 
 function rival_empires.evaluate(game)
@@ -408,18 +404,11 @@ function rival_empires.evaluate(game)
     return snapshots, interfaces
 end
 
-function rival_empires.reconcile_all(game)
-    local snapshots, interfaces = rival_empires.evaluate(game)
-    local applied = 0
+local function log_assignments()
     local boosted = 0
-    for key, snapshot in pairs(snapshots) do
-        if not snapshot.is_human then
-            local tier = state.assignments[key] or 0
-            apply_assignment(game, interfaces[key], tier)
-            applied = applied + 1
-            if tier > 0 then
-                boosted = boosted + 1
-            end
+    for _, tier in pairs(state.assignments) do
+        if tier > 0 then
+            boosted = boosted + 1
         end
     end
     local champion_count = 0
@@ -429,26 +418,19 @@ function rival_empires.reconcile_all(game)
         end
     end
     log(
-        "reconciled turn=" .. tostring(state.evaluated_turn) ..
+        "evaluated turn=" .. tostring(state.evaluated_turn) ..
         " human=" .. tostring(state.human_key) ..
         " imperium=" .. tostring(state.human_imperium) ..
         " base_tier=" .. tostring(state.base_tier) ..
         " champions=" .. tostring(champion_count) ..
-        " boosted=" .. tostring(boosted) ..
-        " ai_factions=" .. tostring(applied)
+        " boosted=" .. tostring(boosted)
     )
-    return snapshots
 end
 
-local function remove_all_from_world(game)
-    local _, interfaces = collect_world(game)
-    for key, faction in pairs(interfaces) do
-        if not safe_value(function()
-            return faction:is_human()
-        end, false) then
-            remove_known_bundles(game, key)
-        end
-    end
+function rival_empires.prepare_round(game)
+    local snapshots, interfaces = rival_empires.evaluate(game)
+    log_assignments()
+    return snapshots, interfaces
 end
 
 function rival_empires.on_faction_turn_start(context)
@@ -472,15 +454,15 @@ function rival_empires.on_faction_turn_start(context)
     end, false)
 
     if not rival_empires.config.enabled then
-        if is_local_human then
-            remove_all_from_world(game)
+        if runtime_target(faction) then
+            remove_known_bundles(game, key)
         end
         return
     end
 
     if is_local_human then
         state.dirty = true
-        rival_empires.reconcile_all(game)
+        rival_empires.prepare_round(game)
         return
     end
     if safe_value(function()
@@ -491,7 +473,7 @@ function rival_empires.on_faction_turn_start(context)
 
     local turn = current_turn(game)
     if state.dirty or state.evaluated_turn ~= turn then
-        rival_empires.evaluate(game)
+        rival_empires.prepare_round(game)
     end
     apply_assignment(game, faction, state.assignments[key] or 0)
 end
@@ -502,18 +484,10 @@ function rival_empires.on_loading_game(context)
 end
 
 function rival_empires.on_first_tick_after_world_created(context)
-    if not rival_empires.config.enabled then
-        return
-    end
-    local game = campaign_game_interface()
-    if not game then
-        return
-    end
-    local supported = campaign_is_supported(game)
-    if supported then
-        state.dirty = true
-        rival_empires.reconcile_all(game)
-    end
+    -- FirstTick is deliberately mutation-free. The next faction-turn event
+    -- evaluates the world and refreshes only that active AI faction's bundle.
+    state.dirty = true
+    state.evaluated_turn = -1
 end
 
 local function safe_handler(name, callback, context)

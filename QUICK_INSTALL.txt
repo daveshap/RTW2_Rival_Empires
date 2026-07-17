@@ -1,6 +1,6 @@
-RTW2 RIVAL EMPIRES 0.9.0 — QUICK INSTALL
+RTW2 RIVAL EMPIRES 0.9.1 — QUICK INSTALL
 
-1. Extract rtw2_rival_empires_v0.9.0.zip.
+1. Extract rtw2_rival_empires_v0.9.1.zip.
 2. Close Total War: ROME II.
 3. Copy @rtw2_rival_empires_balanced.pack to the Rome II data folder.
 4. Open the launcher and Mod Manager.

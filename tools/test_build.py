@@ -28,20 +28,21 @@ class BalanceCoreTests(unittest.TestCase):
             expected,
         )
 
-    def test_champions_enemy_coalition_and_established_rival(self) -> None:
+    def test_champions_enemy_and_established_rival(self) -> None:
         factions = [
             simulate_balance.Faction("rome", 40, human=True),
             simulate_balance.Faction("parthia", 12, 30),
             simulate_balance.Faction("carthage", 10, 27),
             simulate_balance.Faction("arverni", 8, 22),
             simulate_balance.Faction("egypt", 4, at_war=True),
-            simulate_balance.Faction("germania", 4, coalition=True),
+            simulate_balance.Faction("germania", 4),
             simulate_balance.Faction("iberia", 6),
             simulate_balance.Faction("minor", 2),
         ]
         assigned = simulate_balance.assign_tiers(factions, 7, self.settings)
-        for key in ("parthia", "carthage", "arverni", "egypt", "germania"):
+        for key in ("parthia", "carthage", "arverni", "egypt"):
             self.assertEqual(assigned[key], 7)
+        self.assertEqual(assigned["germania"], 6)
         self.assertEqual(assigned["iberia"], 6)
         self.assertEqual(assigned["minor"], 0)
 
@@ -63,12 +64,25 @@ class BalanceCoreTests(unittest.TestCase):
         factions = [
             simulate_balance.Faction("champion", 12, 30),
             simulate_balance.Faction("enemy", 2, at_war=True),
-            simulate_balance.Faction("coalition", 2, coalition=True),
+            simulate_balance.Faction("neutral", 2),
         ]
         assigned = simulate_balance.assign_tiers(factions, 7, settings)
         self.assertEqual(assigned["champion"], 0)
         self.assertEqual(assigned["enemy"], 7)
-        self.assertEqual(assigned["coalition"], 7)
+        self.assertEqual(assigned["neutral"], 0)
+
+    def test_noncontiguous_tiers_use_previous_configured_support_tier(self) -> None:
+        settings = build_pack.Settings(
+            minimum_champion_regions=5,
+            tiers=build_pack.make_tiers((
+                (3, 10, 10, 0, 0),
+                (5, 20, 20, -1, 1),
+                (7, 30, 30, -1, 2),
+            )),
+        )
+        factions = [simulate_balance.Faction("established", 3)]
+        assigned = simulate_balance.assign_tiers(factions, 7, settings)
+        self.assertEqual(assigned["established"], 5)
 
 
 class BuilderTests(unittest.TestCase):
@@ -173,14 +187,15 @@ class BuilderTests(unittest.TestCase):
         second = build_pack.build_pack(self.settings)
         self.assertEqual(first, second)
 
-    def test_bootstrap_registers_compatible_mods_in_order(self) -> None:
+    def test_bootstrap_is_rival_only(self) -> None:
         files = dict(build_pack.pack_files(self.settings))
         bootstrap = files["lua_scripts\\all_scripted.lua"]
-        food = bootstrap.index(b"lua_scripts.rtw2_food_exports")
-        coalitions = bootstrap.index(b"lua_scripts.rtw2_grand_coalitions")
-        rivals = bootstrap.index(b"lua_scripts.rtw2_rival_empires")
-        self.assertLess(food, coalitions)
-        self.assertLess(coalitions, rivals)
+        self.assertEqual(
+            bootstrap.count(b"lua_scripts.rtw2_rival_empires"),
+            1,
+        )
+        self.assertNotIn(b"rtw2_food_exports", bootstrap)
+        self.assertNotIn(b"rtw2_grand_coalitions", bootstrap)
         self.assertIn(b"events = triggers.events", bootstrap)
 
     def test_invalid_tuning_is_rejected(self) -> None:

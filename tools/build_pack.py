@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Iterable, Sequence
 
 
-VERSION = "0.9.0"
+VERSION = "0.9.1"
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SOURCE_ROOT = PROJECT_ROOT / "source"
 
@@ -325,6 +325,8 @@ def building_set_junction_rows() -> list[tuple[str, str, str]]:
 
 
 def _db_header(table: str, version: int, rows: Sequence[object]) -> bytearray:
+    if version < 0:
+        raise ValueError("DB table version cannot be negative")
     guid = str(
         uuid.uuid5(
             uuid.NAMESPACE_URL,
@@ -333,8 +335,11 @@ def _db_header(table: str, version: int, rows: Sequence[object]) -> bytearray:
     )
     data = bytearray(DB_GUID_MARKER)
     data += _sized_u16(guid)
-    data += DB_VERSION_MARKER
-    data += _i32(version)
+    # Rome II's version-zero tables are unversioned on disk. RPFM likewise
+    # emits the marker only for schemas with a positive version number.
+    if version > 0:
+        data += DB_VERSION_MARKER
+        data += _i32(version)
     data += b"\x01"
     data += _u32(len(rows))
     return data

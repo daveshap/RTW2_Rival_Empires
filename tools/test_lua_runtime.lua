@@ -102,10 +102,11 @@ local minor = make_faction("rom_minor", false, 2, 8)
 local ally = make_faction("rom_ally", false, 7, 18)
 local client = make_faction("rom_client", false, 7, 18)
 local rebels = make_faction("rom_test_rebels", false, 14, 30)
+local dead = make_faction("rom_dead", false, 0, 0)
 
 local factions = {
     rome, parthia, carthage, arverni, egypt, germania, iberia,
-    minor, ally, client, rebels
+    minor, ally, client, rebels, dead
 }
 
 set_treaty(egypt, rome, "current_treaty_at_war")
@@ -117,12 +118,6 @@ set_treaty(client, rome, "current_treaty_vassal_of_player")
 set_treaty(rome, client, "current_treaty_client_state")
 
 iberia._any_war = true
-
-package.loaded["lua_scripts.rtw2_grand_coalitions"] = {
-    get_active_coalition = function()
-        return { target_key = "rom_rome", members = { "rom_suebi" } }
-    end
-}
 
 local model = {
     _turn = 120,
@@ -180,16 +175,18 @@ assert_equal(#events.FactionTurnStart, 1, "turn handler count")
 assert_equal(#events.LoadingGame, 1, "load handler count")
 assert_equal(#events.FirstTickAfterWorldCreated, 1, "first-tick handler count")
 
-rivals.reconcile_all(game)
+rivals.prepare_round(game)
 local state = rivals.debug_state()
+assert_equal(#calls, 0, "round preparation must not mutate native state")
 assert_equal(state.base_tier, 7, "maximum Imperium band")
 for _, key in ipairs({
     "rom_parthia", "rom_carthage", "rom_arverni",
-    "rom_ptolemaics", "rom_suebi"
+    "rom_ptolemaics"
 }) do
     assert_equal(state.assignments[key], 7, key .. " full tier")
 end
 assert_equal(state.assignments["rom_arevaci"], 6, "established rival lower tier")
+assert_equal(state.assignments["rom_suebi"], 6, "standalone established rival")
 assert_equal(
     state.reasons["rom_arevaci"],
     "established_rival",
@@ -199,36 +196,57 @@ assert_equal(state.assignments["rom_minor"], 0, "minor excluded")
 assert_equal(state.assignments["rom_ally"], 0, "human ally excluded")
 assert_equal(state.assignments["rom_client"], 0, "human dependent excluded")
 assert_equal(state.assignments["rom_test_rebels"], 0, "rebels excluded")
+assert_equal(state.assignments["rom_dead"], 0, "dead faction excluded")
 
-local applied = {}
+-- Applying a tier is bounded to the active AI faction; no world-wide native
+-- mutation occurs during round preparation or another faction's turn.
+calls = {}
+events.FactionTurnStart[1]({ faction = function() return egypt end })
+local saw_egypt = false
 for _, call in ipairs(calls) do
+    assert_equal(call[3], "rom_ptolemaics", "per-faction mutation target")
     if call[1] == "apply" then
-        applied[call[3]] = call
+        saw_egypt = call[2] == "rtw2_rival_empires_tier_7"
         assert_equal(call[4], 1, "bundle duration")
     end
 end
-assert_equal(applied["rom_ptolemaics"][2], "rtw2_rival_empires_tier_7")
-assert_equal(applied["rom_arevaci"][2], "rtw2_rival_empires_tier_6")
-assert_true(applied["rom_ally"] == nil, "ally receives no bundle")
+assert_true(saw_egypt, "enemy receives full-tier bundle")
+
+calls = {}
+events.FactionTurnStart[1]({ faction = function() return iberia end })
+local saw_iberia = false
+for _, call in ipairs(calls) do
+    assert_equal(call[3], "rom_arevaci", "established-rival target")
+    if call[1] == "apply" then
+        saw_iberia = call[2] == "rtw2_rival_empires_tier_6"
+    end
+end
+assert_true(saw_iberia, "established rival receives lower-tier bundle")
 
 -- The tunable enemies-only mode must not silently retain regional champions.
 local previous_mode = rivals.config.eligibility_mode
 rivals.config.eligibility_mode = "enemies_only"
-local _, interfaces_for_mode = rivals.evaluate(game)
+rivals.evaluate(game)
 state = rivals.debug_state()
 assert_equal(state.assignments["rom_parthia"], 0, "enemies-only champion")
 assert_equal(state.assignments["rom_ptolemaics"], 7, "enemies-only war")
-assert_equal(state.assignments["rom_suebi"], 7, "enemies-only coalition")
+assert_equal(state.assignments["rom_suebi"], 0, "enemies-only neutral")
 rivals.config.eligibility_mode = previous_mode
 
--- Early-game neutrality: the local human turn removes stale bundles and
--- applies none when Imperium is below three.
+-- Early-game neutrality: the local human turn only evaluates assignments.
 rome._imperium = 2
 calls = {}
 events.FactionTurnStart[1]({ faction = function() return rome end })
 state = rivals.debug_state()
 assert_equal(state.base_tier, 0, "Imperium two is inactive")
+assert_equal(#calls, 0, "human turn performs no native bundle mutation")
+
+-- The current AI clears its own stale bundles and receives no early-game
+-- application. Every native call remains scoped to that one faction.
+calls = {}
+events.FactionTurnStart[1]({ faction = function() return egypt end })
 for _, call in ipairs(calls) do
+    assert_equal(call[3], "rom_ptolemaics", "early-game cleanup target")
     assert_true(call[1] ~= "apply", "no early-game application")
 end
 
@@ -240,7 +258,7 @@ calls = {}
 events.FactionTurnStart[1]({ faction = function() return egypt end })
 state = rivals.debug_state()
 assert_equal(state.base_tier, 7, "post-load evaluation")
-local saw_egypt = false
+saw_egypt = false
 for _, call in ipairs(calls) do
     if call[1] == "apply" and call[3] == "rom_ptolemaics" then
         saw_egypt = call[2] == "rtw2_rival_empires_tier_7"
@@ -248,9 +266,58 @@ for _, call in ipairs(calls) do
 end
 assert_true(saw_egypt, "post-load AI bundle application")
 
--- FirstTick also performs a complete reconciliation without needing a save.
+-- FirstTick is deliberately mutation-free. The next active AI evaluates and
+-- refreshes only itself.
 calls = {}
 events.FirstTickAfterWorldCreated[1]({})
-assert_true(#calls > 0, "first-tick reconciliation calls")
+state = rivals.debug_state()
+assert_true(state.dirty, "first tick marks assignments dirty")
+assert_equal(#calls, 0, "first tick performs no native mutation")
+events.FactionTurnStart[1]({ faction = function() return egypt end })
+assert_true(#calls > 0, "next AI turn refreshes its own bundle")
+for _, call in ipairs(calls) do
+    assert_equal(call[3], "rom_ptolemaics", "post-first-tick target")
+end
+
+-- Excluded and dead placeholders never receive native bundle calls.
+calls = {}
+events.FactionTurnStart[1]({ faction = function() return rebels end })
+events.FactionTurnStart[1]({ faction = function() return dead end })
+assert_equal(#calls, 0, "excluded/dead factions are never mutated")
+
+-- Disabling the mod drains only the currently active AI faction.
+rivals.config.enabled = false
+calls = {}
+events.FactionTurnStart[1]({ faction = function() return egypt end })
+assert_true(#calls > 0, "disabled mod clears current AI bundles")
+for _, call in ipairs(calls) do
+    assert_equal(call[1], "remove", "disabled cleanup only removes")
+    assert_equal(call[3], "rom_ptolemaics", "disabled cleanup target")
+end
+rivals.config.enabled = true
+
+-- Tuned builds may intentionally skip Imperium bands. Established rivals use
+-- the previous configured tier, not a hard-coded numeric decrement.
+local saved_tiers = rivals.config.tiers
+rivals.config.tiers = {
+    [3] = { bundle_key = "tier_3" },
+    [5] = { bundle_key = "tier_5" },
+    [7] = { bundle_key = "tier_7" }
+}
+local tuned_assignments = rivals.core.assign_tiers({
+    established = {
+        key = "established",
+        alive = true,
+        is_human = false,
+        excluded = false,
+        allied_human = false,
+        dependent_human = false,
+        at_war_human = false,
+        regions = 3,
+        military = 1
+    }
+}, 7, rivals.config)
+assert_equal(tuned_assignments.established, 5, "previous configured tier")
+rivals.config.tiers = saved_tiers
 
 print("RTW2 Rival Empires Lua runtime tests passed")

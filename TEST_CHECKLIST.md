@@ -6,15 +6,17 @@ and mocked campaign calls. These checks require the actual Rome II executable.
 ## Clean activation
 
 1. Back up the save.
-2. Enable the balanced standalone pack and only known-compatible, separately
-   installed mods.
+2. Disable every other user-script mod and enable only the balanced Rival
+   Empires standalone pack.
 3. Confirm **Run user script mods** is enabled.
-4. Load a single-player Grand Campaign.
-5. End or advance the current turn.
-6. Check `scripting.lua.log` for `RTW2 Rival Empires` registration and a
-   reconciliation line containing the human Imperium and base tier.
+4. Launch Rome II and confirm that the main menu appears. Failure to reach the
+   main menu is release-blocking.
+5. Load a single-player Grand Campaign.
+6. End or advance the current turn.
+7. Check `scripting.lua.log` for `RTW2 Rival Empires` registration and an
+   assignment line containing the human Imperium and base tier.
 
-Expected: no Lua error, freeze, or campaign event failure.
+Expected: no startup crash, Lua error, freeze, or campaign event failure.
 
 ## Maximum-Imperium save
 
@@ -32,7 +34,7 @@ need not change duration and already-paid costs are not refunded.
 
 1. Identify the three largest non-friendly, non-dependent AI factions with at
    least five regions.
-2. Confirm the reconciliation log reports three champions when three exist.
+2. Confirm the evaluation log reports three champions when three exist.
 3. Compare against a fourth independent faction with at least three regions.
 
 Expected: the top three receive the full tier; the fourth receives one tier
@@ -49,17 +51,8 @@ Check one of each if present:
 - AI faction at war with someone other than the human.
 
 Expected: none is classified as a current human enemy or receives a bundle,
-unless the small minor is explicitly an active Grand Coalition member. A
-third-party war alone must not trigger the full tier.
-
-## Grand Coalitions integration
-
-1. Enable a current Grand Coalitions release.
-2. Let a coalition form and inspect the period before its containment war.
-3. Check the Rival Empires reconciliation after coalition formation.
-
-Expected: coalition members receive the full tier during mobilization. Rival
-Empires does not make peace, declare war, or alter diplomacy itself.
+except that an actual war with the human always receives the full current tier.
+A third-party war alone must not trigger the full tier.
 
 ## Construction coverage
 
@@ -75,7 +68,8 @@ discount.
 
 1. Save while the maximum tier is active.
 2. Reload and advance to the next AI faction turn.
-3. Confirm a reconciliation line appears and effects persist.
+3. Confirm an assignment line appears and effects persist as each AI faction
+   begins its turn.
 4. On a disposable copy, disable the pack and advance one full round.
 
 Expected: load refreshes bundles. After removal, the one-turn bundles expire;

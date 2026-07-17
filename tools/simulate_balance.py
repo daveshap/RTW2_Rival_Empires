@@ -20,7 +20,6 @@ class Faction:
     allied: bool = False
     dependent: bool = False
     at_war: bool = False
-    coalition: bool = False
 
 
 def base_tier(imperium: int, settings: build_pack.Settings) -> int:
@@ -65,12 +64,8 @@ def assign_tiers(
     for faction in factions:
         assigned = 0
         if basic_candidate(faction) and current:
-            full = (
-                faction.at_war
-                or faction.coalition
-                or faction.key in champions
-            )
-            operational_enemy = faction.at_war or faction.coalition
+            full = faction.at_war or faction.key in champions
+            operational_enemy = faction.at_war
             if settings.eligibility_mode == "all_ai":
                 assigned = current
             elif settings.eligibility_mode == "enemies_only":
@@ -78,9 +73,12 @@ def assign_tiers(
             elif full:
                 assigned = current
             elif settings.eligibility_mode == "independent_rivals":
-                lower = current - 1
+                lower = max(
+                    (tier for tier in defined if tier < current),
+                    default=0,
+                )
                 if faction.regions >= settings.minimum_established_regions \
-                        and lower in defined:
+                        and lower:
                     assigned = lower
         result[faction.key] = assigned
     return result

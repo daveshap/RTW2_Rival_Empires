@@ -10,14 +10,15 @@ The balanced release grants no money, units, recruitment discounts, upkeep
 discounts, replenishment, morale, battle statistics, or autoresolve bonuses.
 The AI must still use its own settlements, economy, build choices, and armies.
 
-Version 0.9.0 is a single-player Grand Campaign playtest release.
+Version 0.9.1 is a single-player Grand Campaign playtest release and replaces
+the withdrawn, boot-broken 0.9.0 build.
 
 ## Release archive
 
 The versioned release is one ZIP file:
 
 ```text
-rtw2_rival_empires_v0.9.0.zip
+rtw2_rival_empires_v0.9.1.zip
 ```
 
 For normal installation, extract and use:
@@ -47,15 +48,13 @@ The local human's Imperium determines the available response tier:
 
 Full current-tier support goes to:
 
-- AI factions currently at war with the local human;
-- members reported by an active RTW2 Grand Coalition; and
+- AI factions currently at war with the local human; and
 - the three largest eligible regional powers with at least five regions.
 
 Other independent AI factions with at least three regions receive one tier
 lower. One- and two-region factions receive nothing unless they are actually at
-war with the human or serving in the coalition. This concentrates assistance
-on plausible rival empires instead of indefinitely preserving every minor
-tribe.
+war with the human. This concentrates assistance on plausible rival empires
+instead of indefinitely preserving every minor tribe.
 
 The following never receive a bundle:
 
@@ -71,7 +70,7 @@ against the human.
 
 ## Installation
 
-1. Extract `rtw2_rival_empires_v0.9.0.zip`.
+1. Extract `rtw2_rival_empires_v0.9.1.zip`.
 2. Close Rome II.
 3. Copy `@rtw2_rival_empires_balanced.pack` into the game's `data` directory.
 4. Open the Rome II launcher and Mod Manager.
@@ -80,7 +79,7 @@ against the human.
 7. Load the Grand Campaign save and advance to the next faction turns.
 
 It is designed to be added to an existing save. At maximum Imperium, eligible
-AI factions receive the maximum appropriate tier on the next reconciliation.
+AI factions receive the maximum appropriate tier at their next faction turn.
 Construction costs already paid are not refunded, and an already-queued
 building may retain the duration captured when it was ordered.
 
@@ -94,10 +93,10 @@ are ranked by:
 2. current military unit strength; and
 3. faction key as a stable tie-break.
 
-The assignments are reconciled immediately and each AI faction refreshes its
-own one-turn bundle again at faction-turn start. Loading a save and the first
-world tick also trigger reconciliation, so the mod does not depend on starting
-a new campaign.
+The script evaluates assignments at the local human turn. Each AI faction then
+refreshes only its own one-turn bundle at its faction-turn start. Loading and
+the first world tick mark the assignments for reevaluation but deliberately
+perform no world-wide native bundle mutation.
 
 The default eligibility mode is `independent_rivals`. Builders may select
 `enemies_only` or `all_ai`; see [BALANCE.md](BALANCE.md).
@@ -127,25 +126,16 @@ overhaul-defined building sets are not assumed to be members of those sets.
 Their research, building-cost, and public-order effects still work, but their
 literal construction duration may not. See [COMPATIBILITY.md](COMPATIBILITY.md).
 
-## Compatibility with separately versioned companion mods
+## Standalone and scripted-mod compatibility
 
-Rival Empires is an independent mod with its own version history and release
-archive. Its standalone pack carries a compatible Rome II bootstrap because
-the game exposes only one `lua_scripts/all_scripted.lua` entry point. The
-bootstrap preserves the seven vanilla imports and attempts to register, in
-order:
+Rival Empires is independent, with its own version history, release archive,
+configuration, source, and Rival-only bootstrap. The standalone loader
+preserves Rome II's seven vanilla imports and registers only Rival Empires.
 
-1. RTW2 Food Exports;
-2. RTW2 Grand Coalitions; and
-3. RTW2 Rival Empires.
-
-Compatible, current releases of those separately installed mods use the same
-bootstrap, so whichever pack wins that duplicate internal path produces the
-same registration result. Older Food Exports or Grand Coalitions releases may
-need to be updated. Stable Politics is DB-only and has no loader conflict.
-
-Other scripted overhauls that replace `lua_scripts/all_scripted.lua` require a
-manual merge. The module-only pack exists for that workflow.
+Rome II permits only one enabled `lua_scripts/all_scripted.lua` to win that
+internal path. Combining Rival Empires with another scripted mod therefore
+requires a consciously merged loader and the included module-only pack. Rival
+Empires contains no automatic imports or runtime integration with other mods.
 
 ## Tuning and building
 
@@ -180,12 +170,14 @@ eligibility modes, and a changed or duplicated core building-set list.
 The release is covered by:
 
 - pure Python selection and balance tests;
-- deterministic PFH4 construction and payload verification;
-- exact DB effect, scope, schema-version, field-order, and building-set tests;
+- deterministic PFH4 construction plus an independent container parser;
+- a full-row independent DB decoder with strict schema-version-zero checks;
+- exact DB effect, scope, field-order, building-set, and TSV-source tests;
 - Lua 5.1 parsing;
 - a mocked campaign runtime covering maximum Imperium, current enemies,
-  coalition members, champions, lower-tier rivals, minors, allies, subjects,
-  rebels, third-party wars, loading, and first-tick reconciliation; and
+  champions, lower-tier rivals, minors, allies, subjects, rebels, dead
+  placeholders, third-party wars, loading, mutation-free first tick, and
+  bounded per-faction refresh; and
 - a reproducible SHA-256 manifest.
 
 The game executable is not present in the build environment. The remaining

@@ -2,8 +2,7 @@
 
 Rival Empires is a development catch-up system, not a combat difficulty mod.
 Its purpose is to help the campaign generate a few functioning late-game
-powers that can exploit the diplomacy and coalition systems with real regional
-economies.
+powers that can exploit the diplomacy system with real regional economies.
 
 ## Balanced tiers
 
@@ -28,10 +27,10 @@ counted.
 
 ## Full tier versus support tier
 
-At human Imperium 7, current enemies, coalition members, and the top three
-regional champions receive tier 7. Other established independent rivals
-receive tier 6. At Imperium 3, that one-tier-lower rule resolves to no bundle,
-so the first response remains focused on actual enemies and significant powers.
+At human Imperium 7, current enemies and the top three regional champions
+receive tier 7. Other established independent rivals receive tier 6. At
+Imperium 3, that one-tier-lower rule resolves to no bundle, so the first
+response remains focused on actual enemies and significant powers.
 
 This creates deliberate concentration:
 
@@ -52,11 +51,10 @@ infrastructure. It is not a battle-morale effect.
 
 `independent_rivals` is recommended.
 
-- `enemies_only`: only factions at war with the human and active Grand
-  Coalition members receive the full tier. Regional champions do not qualify
-  merely by size.
-- `independent_rivals`: enemies, coalition members, and champions receive the
-  full tier; other established rivals receive one tier lower.
+- `enemies_only`: only factions at war with the human receive the full tier.
+  Regional champions do not qualify merely by size.
+- `independent_rivals`: enemies and champions receive the full tier; other
+  established rivals receive one tier lower.
 - `all_ai`: every otherwise eligible AI faction receives the full tier. Human
   allies, dependents, insurgents, and dead factions remain excluded.
 

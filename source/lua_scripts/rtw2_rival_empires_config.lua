@@ -1,12 +1,12 @@
 -- RTW2 Rival Empires - generated balanced configuration
 
 return {
-    version = "0.9.0",
+    version = "0.9.1",
     preset = "balanced",
     enabled = true,
     write_log = true,
 
-    -- Version 0.9 is intentionally scoped to the single-player Grand
+    -- Version 0.9.1 is intentionally scoped to the single-player Grand
     -- Campaign. Multiple local humans need a different target-selection rule.
     grand_campaign_only = true,
     eligibility_mode = "independent_rivals",
@@ -16,10 +16,10 @@ return {
     minimum_established_rival_regions = 3,
     effect_bundle_duration = 1,
 
-    -- A faction at war with the local human, a Grand Coalition member, or a
-    -- regional champion receives the current full tier. Other established
-    -- independent rivals receive one tier lower. Human friends/dependents and
-    -- campaign insurgents are always excluded.
+    -- A faction at war with the local human or a regional champion receives
+    -- the current full tier. Other established independent rivals receive one
+    -- tier lower. Human friends/dependents and campaign insurgents are always
+    -- excluded.
     tiers = {
         [3] = { research_percent = 10, construction_cost_percent = 10, build_turns = 0, public_order = 0, bundle_key = "rtw2_rival_empires_tier_3" },
         [4] = { research_percent = 18, construction_cost_percent = 15, build_turns = -1, public_order = 1, bundle_key = "rtw2_rival_empires_tier_4" },

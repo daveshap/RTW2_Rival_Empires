@@ -36,6 +36,18 @@ function core.bundle_key_for_tier(tier, config)
     return definition and definition.bundle_key or nil
 end
 
+local function previous_configured_tier(tier, config)
+    local current = math.floor(numeric(tier, 0))
+    local selected = 0
+    for configured, _ in pairs(config.tiers) do
+        local candidate = math.floor(numeric(configured, 0))
+        if candidate < current and candidate > selected then
+            selected = candidate
+        end
+    end
+    return selected
+end
+
 function core.select_champions(factions, config)
     local candidates = {}
     for _, faction in pairs(factions or {}) do
@@ -77,8 +89,7 @@ function core.tier_for_faction(faction, base_tier, champions, config)
     end
 
     local mode = tostring(config.eligibility_mode or "independent_rivals")
-    local operational_enemy = faction.at_war_human == true or
-        faction.coalition_member == true
+    local operational_enemy = faction.at_war_human == true
     local full_strength = operational_enemy or
         champions[faction_key(faction)] == true
 
@@ -87,8 +98,7 @@ function core.tier_for_faction(faction, base_tier, champions, config)
     end
     if mode == "enemies_only" then
         if operational_enemy then
-            return base_tier,
-                faction.at_war_human and "enemy" or "coalition"
+            return base_tier, "enemy"
         end
         return 0, "not_enemy"
     end
@@ -96,15 +106,12 @@ function core.tier_for_faction(faction, base_tier, champions, config)
         if faction.at_war_human then
             return base_tier, "enemy"
         end
-        if faction.coalition_member then
-            return base_tier, "coalition"
-        end
         return base_tier, "champion"
     end
     if numeric(faction.regions, 0) >=
         numeric(config.minimum_established_rival_regions, 3) then
-        local lower_tier = base_tier - 1
-        if config.tiers[lower_tier] then
+        local lower_tier = previous_configured_tier(base_tier, config)
+        if lower_tier > 0 then
             return lower_tier, "established_rival"
         end
     end
