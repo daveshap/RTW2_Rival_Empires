@@ -1,0 +1,7 @@
+key	localised_description	localised_title	ui_icon	bundle_target
+#effect_bundles_tables;1;db/effect_bundles_tables/rtw2_rival_empires_bundles				
+rtw2_rival_empires_tier_3	Rival development mobilization: research +10%, construction cost -10%.	Rival Mobilization 3		faction
+rtw2_rival_empires_tier_4	Rival development mobilization: research +18%, construction cost -15%, core-building construction -1 turn, provincial public order +1.	Rival Mobilization 4		faction
+rtw2_rival_empires_tier_5	Rival development mobilization: research +26%, construction cost -22%, core-building construction -1 turn, provincial public order +2.	Rival Mobilization 5		faction
+rtw2_rival_empires_tier_6	Rival development mobilization: research +34%, construction cost -29%, core-building construction -1 turn, provincial public order +3.	Rival Mobilization 6		faction
+rtw2_rival_empires_tier_7	Rival development mobilization: research +42%, construction cost -36%, core-building construction -1 turn, provincial public order +4.	Rival Mobilization 7		faction

@@ -1,0 +1,3 @@
+effect	icon	priority	icon_negative	category	is_positive_value_good
+#effects_tables;3;db/effects_tables/rtw2_rival_empires_hidden_effect					
+rtw2_rival_empires_build_time		0		rtw2_rival_empires_hidden	false

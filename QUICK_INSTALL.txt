@@ -1,0 +1,22 @@
+RTW2 RIVAL EMPIRES 0.9.0 — QUICK INSTALL
+
+1. Extract rtw2_rival_empires_v0.9.0.zip.
+2. Close Total War: ROME II.
+3. Copy @rtw2_rival_empires_balanced.pack to the Rome II data folder.
+4. Open the launcher and Mod Manager.
+5. Enable "Run user script mods".
+6. Enable the Rival Empires pack.
+7. Load a single-player Grand Campaign save.
+8. Advance through the next faction turns so the AI bundles refresh.
+
+Use the standalone balanced pack for normal installation.
+
+Do not use compatibility/@rtw2_rival_empires_balanced_module_only.pack unless
+you have manually merged Rival Empires into another all_scripted.lua loader.
+
+At maximum human Imperium, full-tier rivals receive +42% research, -36%
+building cost, -1 construction turn for verified core building sets, and +4
+provincial public order. Established non-champion rivals receive one tier less.
+
+Current human allies, clients, vassals, satrapies, rebels, and civil-war
+factions are excluded.

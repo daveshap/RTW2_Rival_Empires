@@ -1,0 +1,2 @@
+e228d6cd7d2913bf16caae46c98b75f7113b5f7954a9454b05d857c2563c3a1a  @rtw2_rival_empires_balanced.pack
+e2a314ae9317f9d98a043c044c16694a76599bd1cf77bcc8cb95078359cc019d  compatibility/@rtw2_rival_empires_balanced_module_only.pack

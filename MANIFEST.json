@@ -1,0 +1,85 @@
+{
+  "name": "RTW2 Rival Empires",
+  "version": "0.9.0",
+  "release_date": "2026-07-17",
+  "release_archive": "rtw2_rival_empires_v0.9.0.zip",
+  "game": "Total War: ROME II - Emperor Edition",
+  "campaign_scope": "single-player main_rome Grand Campaign",
+  "default_pack": "@rtw2_rival_empires_balanced.pack",
+  "compatibility_pack": "compatibility/@rtw2_rival_empires_balanced_module_only.pack",
+  "release_variants": [
+    {
+      "file": "@rtw2_rival_empires_balanced.pack",
+      "purpose": "standalone balanced release"
+    },
+    {
+      "file": "compatibility/@rtw2_rival_empires_balanced_module_only.pack",
+      "purpose": "module-only variant for a manually merged all_scripted.lua"
+    }
+  ],
+  "pack_format": "PFH4 Mod",
+  "license": "MIT",
+  "behavior": {
+    "target": "eligible AI factions only",
+    "driver": "local human Imperium",
+    "eligibility_mode": "independent_rivals",
+    "regional_champions": 3,
+    "minimum_champion_regions": 5,
+    "minimum_established_rival_regions": 3,
+    "excluded": [
+      "humans",
+      "human allies",
+      "human dependents",
+      "dead factions",
+      "slave factions",
+      "rebels",
+      "separatists",
+      "civil-war factions"
+    ]
+  },
+  "tiers": [
+    {"imperium": 3, "research_percent": 10, "construction_cost_percent": -10, "build_turns": 0, "public_order": 0},
+    {"imperium": 4, "research_percent": 18, "construction_cost_percent": -15, "build_turns": -1, "public_order": 1},
+    {"imperium": 5, "research_percent": 26, "construction_cost_percent": -22, "build_turns": -1, "public_order": 2},
+    {"imperium": 6, "research_percent": 34, "construction_cost_percent": -29, "build_turns": -1, "public_order": 3},
+    {"imperium": 7, "research_percent": 42, "construction_cost_percent": -36, "build_turns": -1, "public_order": 4}
+  ],
+  "vanilla_effects": [
+    "rom_building_research_points",
+    "rom_building_building_cost_mod",
+    "rom_faction_public_order_difficulty_level"
+  ],
+  "custom_effect": {
+    "key": "rtw2_rival_empires_build_time",
+    "bonus_value_id": "add_build_time",
+    "priority": 0,
+    "building_set_count": 11
+  },
+  "explicitly_absent": [
+    "treasury grants",
+    "free units or armies",
+    "recruitment discounts",
+    "upkeep discounts",
+    "replenishment bonuses",
+    "battle-stat bonuses",
+    "autoresolve bonuses"
+  ],
+  "source_files": [
+    "source/lua_scripts/all_scripted.lua",
+    "source/lua_scripts/rtw2_rival_empires.lua",
+    "source/lua_scripts/rtw2_rival_empires_core.lua",
+    "source/lua_scripts/rtw2_rival_empires_config.lua",
+    "source/lua_scripts/rtw2_rival_empires_config.lua.in",
+    "source/db/effect_categories_tables/rtw2_rival_empires_hidden_category.tsv",
+    "source/db/effects_tables/rtw2_rival_empires_hidden_effect.tsv",
+    "source/db/effect_bonus_value_building_set_junctions_tables/rtw2_rival_empires_build_time.tsv",
+    "source/db/effect_bundles_tables/rtw2_rival_empires_bundles.tsv",
+    "source/db/effect_bundles_to_effects_junctions_tables/rtw2_rival_empires_effects.tsv"
+  ],
+  "limitations": [
+    "literal build-time coverage is limited to eleven verified core building sets",
+    "queued buildings may not recalculate duration",
+    "other scripted overhauls may require an all_scripted.lua merge",
+    "game-executable verification remains an in-game playtest"
+  ]
+}
